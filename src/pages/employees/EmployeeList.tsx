@@ -14,7 +14,7 @@ import {
 export default function EmployeeList() {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [employees] = useState<Employee[]>(fakeEmployees); // later → from API
+  const [employees] = useState<Employee[]>(fakeEmployees); 
 
   const canManageEmployees = ['SuperAdmin', 'HRManager', 'Manager'].includes(user?.role || '');
 
@@ -121,14 +121,30 @@ export default function EmployeeList() {
                   </td>
                   {canManageEmployees && (
                     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                      <button className="text-indigo-600 hover:text-indigo-900 mr-3">
-                        <PencilSquareIcon className="h-5 w-5 inline" />
-                      </button>
-                      <button className="text-red-600 hover:text-red-900">
-                        <TrashIcon className="h-5 w-5 inline" />
-                      </button>
-                    </td>
-                  )}
+                      {/* Edit button */}
+                     <Link
+                       to={`/employees/${employee.id}`}
+                       className="text-indigo-600 hover:text-indigo-900 mr-4 inline-block"
+                       title="Edit employee"
+                      >
+                        <PencilSquareIcon className="h-5 w-5" aria-hidden="true" />
+                      </Link>
+
+                      {/* Delete button */}
+                      <button
+                        onClick={() => {
+                          if (window.confirm(`Are you sure you want to delete ${employee.firstName} ${employee.lastName}?`)) {
+                          console.log(`Deleting employee ID: ${employee.id}`);
+                          alert(`Employee ${employee.id} would be deleted (mock action)`);
+                       }
+                    }}
+                     className="text-red-600 hover:text-red-900 inline-block"
+                     title="Delete employee"
+                    >
+                    <TrashIcon className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                </td>
+              )}
                 </tr>
               ))}
             </tbody>

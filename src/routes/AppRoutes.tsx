@@ -8,6 +8,7 @@ import HrManagerDashboard from '../pages/dashboard/HrManagerDashboard';
 import ManagerDashboard from '../pages/dashboard/ManagerDashboard';
 import EmployeeDashboard from '../pages/dashboard/EmployeeDashboard';
 import EmployeeList from '../pages/employees/EmployeeList';
+import EmployeeForm from '../pages/employees/EmployeeForm';
 
 export const AppRoutes = () => {
   return (
@@ -54,6 +55,23 @@ export const AppRoutes = () => {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/employees/new"
+        element={
+          <ProtectedRoute allowedRoles={['SuperAdmin', 'HRManager', 'Manager']}>
+            <EmployeeForm />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/employees/:id"
+        element={
+          <ProtectedRoute allowedRoles={['SuperAdmin', 'HRManager', 'Manager']}>
+            <EmployeeForm />
+          </ProtectedRoute>
+        }
+       />
 
       <Route path="/" element={<Navigate to="/login" replace />} />
       <Route path="/unauthorized" element={<div className="p-8 text-center">Unauthorized access</div>} />
