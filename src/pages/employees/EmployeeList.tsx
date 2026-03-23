@@ -14,7 +14,7 @@ import {
 export default function EmployeeList() {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [employees] = useState<Employee[]>(fakeEmployees); 
+  const [employees, setEmployees] = useState<Employee[]>(fakeEmployees);
 
   const canManageEmployees = ['SuperAdmin', 'HRManager', 'Manager'].includes(user?.role || '');
 
@@ -134,12 +134,13 @@ export default function EmployeeList() {
                       <button
                         onClick={() => {
                           if (window.confirm(`Are you sure you want to delete ${employee.firstName} ${employee.lastName}?`)) {
-                          console.log(`Deleting employee ID: ${employee.id}`);
-                          alert(`Employee ${employee.id} would be deleted (mock action)`);
+                            setEmployees(prev => prev.filter(e => e.id !== employee.id));
+                            alert(`Employee ${employee.firstName} ${employee.lastName} deleted (local simulation)`);
                        }
                     }}
                      className="text-red-600 hover:text-red-900 inline-block"
                      title="Delete employee"
+                     aria-label={`Delete ${employee.firstName} ${employee.lastName}`}
                     >
                     <TrashIcon className="h-5 w-5" aria-hidden="true" />
                   </button>
