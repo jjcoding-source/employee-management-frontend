@@ -7,6 +7,7 @@ import SuperAdminDashboard from '../pages/dashboard/SuperAdminDashboard';
 import HrManagerDashboard from '../pages/dashboard/HrManagerDashboard';
 import ManagerDashboard from '../pages/dashboard/ManagerDashboard';
 import EmployeeDashboard from '../pages/dashboard/EmployeeDashboard';
+import EmployeeList from '../pages/employees/EmployeeList';
 
 export const AppRoutes = () => {
   return (
@@ -42,6 +43,14 @@ export const AppRoutes = () => {
         element={
           <ProtectedRoute allowedRoles={['Employee', 'Manager', 'HRManager', 'SuperAdmin']}>
             <EmployeeDashboard />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/employees"
+        element={
+          <ProtectedRoute allowedRoles={['SuperAdmin', 'HRManager', 'Manager', 'Employee']}>
+            <EmployeeList />
           </ProtectedRoute>
         }
       />
