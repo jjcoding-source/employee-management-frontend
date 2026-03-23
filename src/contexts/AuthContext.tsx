@@ -1,5 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
-
+import { createContext, useContext, useState } from 'react';
+import type { ReactNode } from 'react';
 interface User {
   id: string;
   email: string;
@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
   const login = (email: string, role: User['role']) => {
-    setUser({ id: 'fake-id', email, role });
+    setUser({ id: 'fake-' + Date.now(), email, role });
   };
 
   const logout = () => {

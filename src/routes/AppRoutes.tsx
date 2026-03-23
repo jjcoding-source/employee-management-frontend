@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './ProtectedRoute';
 import Login from '../pages/auth/Login';
+import { Navigate } from 'react-router-dom';
 
 import SuperAdminDashboard from '../pages/dashboard/SuperAdminDashboard';
 import HrManagerDashboard from '../pages/dashboard/HrManagerDashboard';
