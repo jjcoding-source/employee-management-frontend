@@ -1,7 +1,6 @@
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7010/api'; 
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:7010/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -26,7 +25,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
-      window.location.href = '/login'; 
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

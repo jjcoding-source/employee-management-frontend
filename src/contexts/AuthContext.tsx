@@ -1,17 +1,15 @@
 import { createContext, useContext, useState, type ReactNode, useEffect } from 'react';
 import api from '../services/api';
-import { jwtDecode } from 'jwt-decode';
-import type { JwtPayload, LoginResponse } from '../types/auth';
 
 interface User {
   id: string;
   email: string;
   role: 'SuperAdmin' | 'HRManager' | 'Manager' | 'Employee';
+  fullName?: string;
 }
 
 interface AuthContextType {
   user: User | null;
-  token: string | null;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
   isLoading: boolean;
@@ -21,19 +19,22 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
   const [isLoading, setIsLoading] = useState(true);
 
-
   useEffect(() => {
-    const storedToken = localStorage.getItem('token');
-    if (storedToken) {
+    const token = localStorage.getItem('token');
+    if (token) {
       try {
-        const decoded = jwtDecode<JwtPayload>(storedToken);
+        const base64Url = token.split('.')[1];
+        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+        const jsonPayload = decodeURIComponent(atob(base64).split('').map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
+        const payload = JSON.parse(jsonPayload);
+
         setUser({
-          id: decoded.sub,
-          email: decoded.email,
-          role: decoded.role as User['role'],
+          id: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier'] || payload.sub,
+          email: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress'] || payload.email,
+          role: payload['http://schemas.microsoft.com/ws/2008/06/identity/claims/role'] as User['role'],
+          fullName: payload['http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name']
         });
       } catch (err) {
         localStorage.removeItem('token');
@@ -43,23 +44,26 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await api.post<LoginResponse>('/auth/login', { email, password });
-    const { token: newToken, user: userData } = response.data;
+    const response = await api.post('/auth/login', { email, password });
+    const { token, email: userEmail, role, fullName } = response.data;
 
-    localStorage.setItem('token', newToken);
-    setToken(newToken);
-    setUser(userData);
+    localStorage.setItem('token', token);
+    setUser({
+      id: '',
+      email: userEmail,
+      role: role as User['role'],
+      fullName
+    });
   };
 
   const logout = () => {
     localStorage.removeItem('token');
-    setToken(null);
     setUser(null);
     window.location.href = '/login';
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout, isLoading }}>
+    <AuthContext.Provider value={{ user, login, logout, isLoading }}>
       {children}
     </AuthContext.Provider>
   );

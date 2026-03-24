@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import AppLayout from '../../components/layout/AppLayout';
-import { fakeEmployees } from '../../utils/constants';
+import api from '../../services/api';
 import type { Employee } from '../../types';
 import {
   MagnifyingGlassIcon,
@@ -13,19 +13,65 @@ import {
 
 export default function EmployeeList() {
   const { user } = useAuth();
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
-  const [employees, setEmployees] = useState<Employee[]>(fakeEmployees);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
   const canManageEmployees = ['SuperAdmin', 'HRManager', 'Manager'].includes(user?.role || '');
 
-  const filteredEmployees = employees.filter(
-    (emp) =>
-      `${emp.firstName} ${emp.lastName}`
-        .toLowerCase()
-        .includes(searchTerm.toLowerCase()) ||
-      emp.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      emp.department.toLowerCase().includes(searchTerm.toLowerCase())
+  // Fetch employees from backend
+  useEffect(() => {
+    const fetchEmployees = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        const response = await api.get('/employees');
+        setEmployees(response.data);
+      } catch (err: any) {
+        console.error('Failed to fetch employees:', err);
+        setError('Failed to load employees. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEmployees();
+  }, []);
+
+  // Delete employee
+  const handleDelete = async (id: number, firstName: string, lastName: string) => {
+    if (!window.confirm(`Are you sure you want to delete ${firstName} ${lastName}?`)) {
+      return;
+    }
+
+    try {
+      await api.delete(`/employees/${id}`);
+      setEmployees(prev => prev.filter(emp => emp.id !== id));
+      alert(`${firstName} ${lastName} has been deleted successfully.`);
+    } catch (err: any) {
+      console.error('Delete failed:', err);
+      alert('Failed to delete employee. Please try again.');
+    }
+  };
+
+  const filteredEmployees = employees.filter((emp) =>
+    `${emp.firstName} ${emp.lastName}`
+      .toLowerCase()
+      .includes(searchTerm.toLowerCase()) ||
+    emp.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    emp.department.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  if (loading) {
+    return (
+      <AppLayout>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg text-gray-600">Loading employees...</div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout>
@@ -41,7 +87,7 @@ export default function EmployeeList() {
           {canManageEmployees && (
             <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
               <Link
-                to="/employees/new" 
+                to="/employees/new"
                 className="inline-flex items-center rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
               >
                 <PlusIcon className="-ml-1 mr-2 h-5 w-5" aria-hidden="true" />
@@ -59,8 +105,6 @@ export default function EmployeeList() {
             </div>
             <input
               type="text"
-              name="search"
-              id="search"
               className="block w-full rounded-md border-0 py-2 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-indigo-600 sm:text-sm sm:leading-6"
               placeholder="Search by name, email, or department..."
               value={searchTerm}
@@ -68,6 +112,12 @@ export default function EmployeeList() {
             />
           </div>
         </div>
+
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700">
+            {error}
+          </div>
+        )}
 
         {/* Table */}
         <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 sm:rounded-lg">
@@ -119,40 +169,38 @@ export default function EmployeeList() {
                       {employee.status}
                     </span>
                   </td>
+
                   {canManageEmployees && (
                     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                      {/* Edit button */}
-                     <Link
-                       to={`/employees/${employee.id}`}
-                       className="text-indigo-600 hover:text-indigo-900 mr-4 inline-block"
-                       title="Edit employee"
-                      >
-                        <PencilSquareIcon className="h-5 w-5" aria-hidden="true" />
-                      </Link>
+                      <div className="flex items-center justify-end gap-4">
+                        {/* Edit Button */}
+                        <Link
+                          to={`/employees/${employee.id}`}
+                          className="text-indigo-600 hover:text-indigo-900 transition-colors"
+                          title="Edit employee"
+                        >
+                          <PencilSquareIcon className="h-5 w-5" aria-hidden="true" />
+                        </Link>
 
-                      {/* Delete button */}
-                      <button
-                        onClick={() => {
-                          if (window.confirm(`Are you sure you want to delete ${employee.firstName} ${employee.lastName}?`)) {
-                            setEmployees(prev => prev.filter(e => e.id !== employee.id));
-                            alert(`Employee ${employee.firstName} ${employee.lastName} deleted (local simulation)`);
-                       }
-                    }}
-                     className="text-red-600 hover:text-red-900 inline-block"
-                     title="Delete employee"
-                     aria-label={`Delete ${employee.firstName} ${employee.lastName}`}
-                    >
-                    <TrashIcon className="h-5 w-5" aria-hidden="true" />
-                  </button>
-                </td>
-              )}
+                        {/* Delete Button */}
+                        <button
+                          onClick={() => handleDelete(employee.id, employee.firstName, employee.lastName)}
+                          className="text-red-600 hover:text-red-900 transition-colors"
+                          title="Delete employee"
+                          aria-label={`Delete ${employee.firstName} ${employee.lastName}`}
+                        >
+                          <TrashIcon className="h-5 w-5" aria-hidden="true" />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
 
-        {filteredEmployees.length === 0 && (
+        {filteredEmployees.length === 0 && !loading && (
           <div className="text-center py-12 text-gray-500">
             No employees found matching your search.
           </div>

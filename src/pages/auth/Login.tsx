@@ -10,19 +10,16 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setError('');
 
-    if (!email || !password) {
-      setError('Please fill in all fields');
-      return;
-    }
-
-    login(email, role);
-
-    const dashboardPath = `/dashboard/${role.toLowerCase()}`;
-    navigate(dashboardPath);
-  };
+  try {
+    await login(email, password);
+  } catch (err: any) {
+    setError(err.response?.data?.message || 'Invalid email or password');
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4 sm:px-6 lg:px-8">
