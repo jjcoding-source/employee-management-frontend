@@ -43,7 +43,7 @@ export default function EmployeeForm() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
-  // Load employee data when in edit mode
+  // Fetch employee data for editing
   useEffect(() => {
     if (isEditMode && id) {
       const fetchEmployee = async () => {
@@ -59,12 +59,12 @@ export default function EmployeeForm() {
             phone: emp.phone || '',
             department: emp.department,
             position: emp.position,
-            joinDate: emp.joinDate.split('T')[0], // format for input type="date"
+            joinDate: emp.joinDate.split('T')[0],
             status: emp.status as 'Active' | 'On Leave' | 'Inactive',
             salary: emp.salary || undefined,
           });
         } catch (err: any) {
-          setError('Failed to load employee data');
+          setError('Failed to load employee details. Please try again.');
           console.error(err);
         } finally {
           setLoading(false);
@@ -75,7 +75,7 @@ export default function EmployeeForm() {
     }
   }, [id, isEditMode]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
@@ -85,23 +85,24 @@ export default function EmployeeForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canManage) return;
+
     setSubmitting(true);
     setError('');
 
     try {
       if (isEditMode && id) {
-        // Update
         await api.put(`/employees/${id}`, formData);
-        alert('Employee updated successfully!');
+        alert('✅ Employee updated successfully!');
       } else {
-        // Create
         await api.post('/employees', formData);
-        alert('Employee added successfully!');
+        alert('✅ Employee added successfully!');
       }
 
       navigate('/employees');
     } catch (err: any) {
-      setError(err.response?.data?.message || 'Failed to save employee. Please try again.');
+      const errorMessage = err.response?.data?.message || 'Failed to save employee. Please try again.';
+      setError(errorMessage);
       console.error(err);
     } finally {
       setSubmitting(false);
@@ -111,18 +112,20 @@ export default function EmployeeForm() {
   if (loading) {
     return (
       <AppLayout>
-        <div className="flex justify-center items-center h-64">Loading employee data...</div>
+        <div className="flex justify-center items-center h-64">
+          <p className="text-lg text-gray-600">Loading employee data...</p>
+        </div>
       </AppLayout>
     );
   }
 
   return (
     <AppLayout>
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-3xl mx-auto px-4">
         <div className="flex items-center mb-8">
           <button
             onClick={() => navigate('/employees')}
-            className="mr-4 p-2 rounded-full hover:bg-gray-100 transition-colors"
+            className="mr-4 p-2 hover:bg-gray-100 rounded-full transition-colors"
           >
             <ArrowLeftIcon className="h-6 w-6 text-gray-600" />
           </button>
@@ -132,12 +135,12 @@ export default function EmployeeForm() {
         </div>
 
         {error && (
-          <div className="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
             {error}
           </div>
         )}
 
-        <form onSubmit={handleSubmit} className="bg-white shadow rounded-xl p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="bg-white shadow-lg rounded-2xl p-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
@@ -145,9 +148,9 @@ export default function EmployeeForm() {
                 type="text"
                 name="firstName"
                 value={formData.firstName}
-                onChange={handleChange}
+                onChange={handleInputChange}
                 required
-                className="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
 
@@ -157,9 +160,9 @@ export default function EmployeeForm() {
                 type="text"
                 name="lastName"
                 value={formData.lastName}
-                onChange={handleChange}
+                onChange={handleInputChange}
                 required
-                className="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
 
@@ -169,9 +172,9 @@ export default function EmployeeForm() {
                 type="email"
                 name="email"
                 value={formData.email}
-                onChange={handleChange}
+                onChange={handleInputChange}
                 required
-                className="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
 
@@ -181,8 +184,8 @@ export default function EmployeeForm() {
                 type="tel"
                 name="phone"
                 value={formData.phone}
-                onChange={handleChange}
-                className="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
 
@@ -191,9 +194,9 @@ export default function EmployeeForm() {
               <select
                 name="department"
                 value={formData.department}
-                onChange={handleChange}
+                onChange={handleInputChange}
                 required
-                className="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="">Select Department</option>
                 <option value="Engineering">Engineering</option>
@@ -211,9 +214,9 @@ export default function EmployeeForm() {
                 type="text"
                 name="position"
                 value={formData.position}
-                onChange={handleChange}
+                onChange={handleInputChange}
                 required
-                className="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
 
@@ -223,9 +226,9 @@ export default function EmployeeForm() {
                 type="date"
                 name="joinDate"
                 value={formData.joinDate}
-                onChange={handleChange}
+                onChange={handleInputChange}
                 required
-                className="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               />
             </div>
 
@@ -234,9 +237,9 @@ export default function EmployeeForm() {
               <select
                 name="status"
                 value={formData.status}
-                onChange={handleChange}
+                onChange={handleInputChange}
                 required
-                className="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
               >
                 <option value="Active">Active</option>
                 <option value="On Leave">On Leave</option>
@@ -251,19 +254,19 @@ export default function EmployeeForm() {
                   type="number"
                   name="salary"
                   value={formData.salary || ''}
-                  onChange={handleChange}
-                  className="w-full rounded-lg border-gray-300 focus:ring-indigo-500 focus:border-indigo-500"
-                  placeholder="Optional"
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                  placeholder="Enter salary (optional)"
                 />
               </div>
             )}
           </div>
 
-          <div className="flex justify-end gap-4 pt-6 border-t">
+          <div className="flex justify-end gap-4 mt-10">
             <button
               type="button"
               onClick={() => navigate('/employees')}
-              className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              className="px-6 py-3 border border-gray-300 rounded-xl text-gray-700 hover:bg-gray-50 transition-colors"
             >
               Cancel
             </button>
@@ -271,13 +274,18 @@ export default function EmployeeForm() {
             <button
               type="submit"
               disabled={submitting || !canManage}
-              className={`px-8 py-2 rounded-lg text-white font-medium transition-colors ${
+              className={`px-8 py-3 rounded-xl text-white font-semibold transition-all ${
                 submitting || !canManage
                   ? 'bg-gray-400 cursor-not-allowed'
-                  : 'bg-indigo-600 hover:bg-indigo-700'
+                  : 'bg-indigo-600 hover:bg-indigo-700 shadow-md'
               }`}
             >
-              {submitting ? 'Saving...' : isEditMode ? 'Update Employee' : 'Add Employee'}
+              {submitting 
+                ? 'Saving...' 
+                : isEditMode 
+                  ? 'Update Employee' 
+                  : 'Add Employee'
+              }
             </button>
           </div>
         </form>
